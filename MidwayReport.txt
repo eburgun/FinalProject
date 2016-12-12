@@ -1,0 +1,12 @@
+Evan Burgun
+Dimitri Raymond
+
+1. So far on the final project we have developed a neighborhood based recommendation system and are working on a model based recommendation system.  
+
+2. I’m not sure what you mean by methods we have implemented. We have split the project up so far in a divide and conquer manner where Dimitry works on adding the extra features to the neighborhood based system where Evan will work on implementing the extra features  in the model based system. From there we will combine the systems and create a hybrid that uses both.
+
+3. The Neighborhood based recommendation system is producing satisfactory results on initial testing but is currently having more rigorous testing and evaluation being added to it. The model based system is not entirely implemented.
+
+4. In implementing the model based system the matrix factorization method is not complete. There are problems with determining the lower degree matrices. 
+
+5. Evan Burgun is working on implementing the Model Based Recommendation System and created the original version of the Neighborhood Based Recommendation System. Dimitry Raymond is also developing a version of the Model Based Recommendation System along with implementing more rigorous testing methods on the Neighborhood Based Recommendation System.
