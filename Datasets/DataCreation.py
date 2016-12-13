@@ -10,7 +10,7 @@ testingFile = "./OriginalDataSets/"
 
 trainingOutput = "./TrainingSet/"
 testingOutput = "./TestingSet/"
-coldStartOutput = "./ColdStart/"
+coldStartOutput = "./ColdTests/"
 
 if(setSize == "1"):
     trainingFile += "LargeTrainSet.txt"
@@ -59,7 +59,7 @@ for x in xrange(5):
         for j in xrange(trainingData.row_ptr[i],trainingData.row_ptr[i + 1]):
             userString += str(trainingData.column_idx[j] + 1) + " " + str(trainingData.rating[j]) + " "
         if i in randomUsers:
-            coldStartFile.write(userString + str(testingData.column_idx[i] + 1) + " " + str(testingData.rating[i]) + "\n" )
+            coldStartFile.write(userString + "\n" )
         else:
             newTrainingFile.write(userString + "\n")
             newTestFile.write(str(testingData.column_idx[i] + 1) + " " + str(testingData.rating[i]) + "\n")

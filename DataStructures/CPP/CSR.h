@@ -21,7 +21,6 @@
 class CSR
 {
     public:
-        CSR (void);
         CSR (std::string fileName);
         ~CSR (void);
         void transpose(void);

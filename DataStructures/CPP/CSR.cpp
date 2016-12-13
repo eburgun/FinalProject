@@ -8,17 +8,6 @@
 
 #include "CSR.h"
 
-
-CSR::CSR(void)
-{
-    rows = 0;
-    columns = 0;
-    nonZeroValues = 0;
-    columnIndex = new int[0];
-    rowPtr = new int[0];
-    ratingVals = new int[0];   
-}
-
 CSR::CSR(std::string fileName)
 {
     std::ifstream file(fileName.c_str());
@@ -31,19 +20,16 @@ CSR::CSR(std::string fileName)
                 input >> rows;
                 input >> columns;
                 input >> nonZeroValues;
-                
             }
             rowPtr = new int[rows+1];
             columnIndex = new int[nonZeroValues];
             ratingVals = new int[nonZeroValues];
             rowPtr[0] = 0;
         } else {
-            
             processLine(line, increment);
         }
         increment++;
     }
-
 }
 
 
@@ -77,22 +63,15 @@ void CSR::transpose(void)
         nRowPtr[columnIndex[i] + 1] += 1;
     }
     for(int i = 0; i < columns; i++) {
-
         nRowPtr[i+1] += nRowPtr[i];
-
     }
     
     for(int i = 0; i < rows; i++) {
         for(int j = rowPtr[i];j < rowPtr[i+1];j++) {
-
             int i2 = columnIndex[j];
-
             nColIdx[nRowPtr[i2] + rowCount[i2]] = i;
-
             nValues[nRowPtr[i2] + rowCount[i2]] = ratingVals[j];
-
             rowCount[i2] += 1;
-
         }
     }
     
@@ -141,7 +120,6 @@ int CSR::getElement(int row, int col)
     } else {
         std::cout << "Value not in matrix" << std::endl;
     }
-    
     return element;
 }
 

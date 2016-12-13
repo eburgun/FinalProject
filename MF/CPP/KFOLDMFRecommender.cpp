@@ -36,17 +36,17 @@ void KFOLDMFRecommender::cleanUpPandQ(CSR * trainingSet)
 {
     for(int i = 0; i<trainingSet->rows; i++){
         delete [] pMatrix[i];
-        pMatrix[i] = nullptr;
+        
     }
     for(int i = 0; i<trainingSet->columns; i++){
         
         delete [] qMatrix[i];
-        qMatrix[i] = nullptr;
+       
     }
     delete [] pMatrix;
-    pMatrix = nullptr;
+    
     delete [] qMatrix;
-    qMatrix = nullptr;
+   
 }
 
 void KFOLDMFRecommender::changeKValue(int newK, CSR * trainingSet)
@@ -129,7 +129,7 @@ void KFOLDMFRecommender::LS_GD(CSR * dataSet, double ** fixedMatrix, double ** s
         double * temp = solvingMatrix[i];
         solvingMatrix[i] = newP;
         delete [] temp;
-        temp = nullptr;
+        
     }
 }
 
@@ -201,10 +201,10 @@ void KFOLDMFRecommender::kFoldsTest(std::string trainStart, std::string testStar
         CSR * testingSet = new CSR(testStart + std::to_string(i) + ".txt");
         CSR * coldSet = new CSR(coldStart + std::to_string(i) + ".txt");
         createPandQ(trainingSet);
-        
+        std::cout << "before training set" << std::endl;
         clock_t trainStart = clock();
         trainSystem(trainingSet, transposeSet);
-        
+        std::cout << "after training set" << std::endl;
         clock_t trainFinish = clock();
         clock_t testStart = clock();
         double mse = mSE(testingSet);
@@ -242,9 +242,9 @@ void KFOLDMFRecommender::kFoldsTest(std::string trainStart, std::string testStar
     outfile.close();
 }
 
-double KFOLDMFRecommender::createAverageUser(CSR * trainingSet)
+double * KFOLDMFRecommender::createAverageUser(CSR * trainingSet)
 {
-    double averageUser[kVal];
+    double * averageUser = new double[kVal];
     for(int i = 0; i < trainingSet->rows; i++)
     {
         for(int j = 0; j < kVal; j++)
