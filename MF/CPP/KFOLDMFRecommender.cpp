@@ -204,8 +204,8 @@ void KFOLDMFRecommender::kFoldsTest(std::string trainStart, std::string testStar
         clock_t testStart = clock();
         double mse = mSE(testingSet);
         double rmse = rMSE(mse);
-        //double averageUser = createAverageUser();
-        //coldStartTesting(coldSet, averageUser);
+        double * averageUser = createAverageUser(trainingSet);
+        coldStartTesting(coldSet, averageUser);
         clock_t testFinish = clock();
         outfile << kVal;
         outfile << " ";
@@ -233,6 +233,8 @@ void KFOLDMFRecommender::kFoldsTest(std::string trainStart, std::string testStar
         
         delete coldSet;
         
+        delete averageUser;
+        
     }
     outfile.close();
 }
@@ -253,7 +255,7 @@ double * KFOLDMFRecommender::createAverageUser(CSR * trainingSet)
     }
     return averageUser;
 }
-/*
+
 void KFOLDMFRecommender::coldStartTesting(CSR * coldSet, double * averageUser)
 {
     double learningRate = 0.025;
@@ -268,12 +270,16 @@ void KFOLDMFRecommender::coldStartTesting(CSR * coldSet, double * averageUser)
         double sumMatrix[kVal];
         for(int j = coldSet->rowPtr[i]; j < coldSet->rowPtr[i+1]; i++)
         {
+            std::cout << "before rating predict" << std::endl;
             double ratingPrediction = funcDotProduct(newUserMatrix[i],qMatrix[coldSet->columnIndex[j]]);
-            
-            double sumMult = (coldSet->ratingVals[j] - dotProduct);
+            std::cout << "before sumMult" << std::endl;
+            double sumMult = (coldSet->ratingVals[j] - ratingPrediction);
+            std::cout << sumMult << std::endl;
             for(int k = 0; k < kVal; k++){
+                std::cout << k << std::endl;
                 sumMatrix[k] = qMatrix[coldSet->columnIndex[j]][k] * sumMult;
             }
+            std::cout << "I make it to the end" << std::endl;
             //evaluate prediction
             //trainNewUserMatrix
         }
@@ -282,18 +288,15 @@ void KFOLDMFRecommender::coldStartTesting(CSR * coldSet, double * averageUser)
             newItem[j] = newUserMatrix[i][j] * lambdaValue;
             sumMatrix[j] = sumMatrix[j] * (learningRate * 2);
             newP[j] = sumMatrix[j] + newItem[j];
-            
         }
         double * temp = newUserMatrix[i];
-        coldSet[i] = newP;
+        newUserMatrix[i] = newP;
         delete temp;
-        
     }
     //determine how quickly you get to ideal rating prediction
-
 }
 
 
-
+/*
     Still need to create formal ratings
 */
