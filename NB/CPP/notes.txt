@@ -1,0 +1,4 @@
+notes
+  kfold
+  cold start
+  rating prediction
