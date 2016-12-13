@@ -3,12 +3,9 @@
 
 #include "KFOLDMFRecommender.h"
 
-KFOLDMFRecommender::KFOLDMFRecommender(int kValue, double lambda, double epsilon, int maxIter)
+KFOLDMFRecommender::KFOLDMFRecommender(int kValue, double lambda, double epsilon, int maxIter):
+    kVal(kValue), lambdaVal(lambda), epsVal(epsilon),iterations(maxIter)
 {
-    kVal = kValue;
-    lambdaVal = lambda;
-    epsVal = epsilon;
-    iterations = maxIter;
     srand(time(NULL));
 }
 
@@ -201,10 +198,8 @@ void KFOLDMFRecommender::kFoldsTest(std::string trainStart, std::string testStar
         CSR * testingSet = new CSR(testStart + std::to_string(i) + ".txt");
         CSR * coldSet = new CSR(coldStart + std::to_string(i) + ".txt");
         createPandQ(trainingSet);
-        std::cout << "before training set" << std::endl;
         clock_t trainStart = clock();
         trainSystem(trainingSet, transposeSet);
-        std::cout << "after training set" << std::endl;
         clock_t trainFinish = clock();
         clock_t testStart = clock();
         double mse = mSE(testingSet);

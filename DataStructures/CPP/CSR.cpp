@@ -75,7 +75,6 @@ void CSR::transpose(void)
         }
     }
     
-    
     int * temp1 = rowPtr;
     int * temp2 = columnIndex;
     int * temp3 = ratingVals;
