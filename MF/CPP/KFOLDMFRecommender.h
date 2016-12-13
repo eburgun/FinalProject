@@ -15,11 +15,11 @@ class KFOLDMFRecommender
 {
     public:
         KFOLDMFRecommender(int kValue, double lambda, double epsilon, int maxIter);
-        
+
         void changeKValue(int newK, CSR * trainingSet);
         void changeLambda(double newLambda);
         void kFoldsTest(std::string trainStart, std::string testStart, std::string coldStart);
-        
+
     private:
         int kVal;
         double lambdaVal;
@@ -36,7 +36,7 @@ class KFOLDMFRecommender
         double mSE(CSR * testingSet);
         double rMSE(double mse);
         //void coldStartTesting(CSR * coldSet, double * averageUser);
-        double createAverageUser(CSR * trainingSet);
+        double* createAverageUser(CSR * trainingSet);
         void LS_GD(CSR * dataSet, double ** fixedMatrix, double ** solvingMatrix,double learningRate, std::string matrixId);
 };
 

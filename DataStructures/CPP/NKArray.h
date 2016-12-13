@@ -4,7 +4,7 @@
 class NKArray
 {
     public:
-        NKArray(int items,int kValue);
+        NKArray(int items,int kratingValsue);
         ~NKArray(void);
         void insertElement(int x, float simil, int ind);
         float getSimil(int x, int y);

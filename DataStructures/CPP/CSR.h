@@ -1,42 +1,54 @@
-//
-//  CSR.h
-//
-//
-//  Created by Evan Burgun on 10/3/16.
-//
-//
+#ifndef _CSR_H_
+#define _CSR_H_
 
-#ifndef CSR_h
-#define CSR_h
-
-#include <stdio.h>
-#include <stdlib.h>
+#include <stdexcept>
 #include <iostream>
-#include <fstream>
 #include <sstream>
-#include <string>
-#include <math.h>
+#include <fstream>
+#include <ctime>
+#include <cmath>
+#include <ctime>
+#include <vector>
 
+#include "Helpers.h"
 
 class CSR
 {
-    public:
-        CSR (void);
-        CSR (std::string fileName);
-        ~CSR (void);
-        void transpose(void);
-        int getElement(int row, int col);
-        int rows;
-        int columns;
-        int nonZeroValues;
-        int * columnIndex;
-        int * rowPtr;
-        int * ratingVals;
+public:
+  CSR(std::string file_name);
+  CSR(int rows_, int cols_, int items_);
+	~CSR();
 
-    private:
-        void processLine(std::string line,int increment);
+	int getElement(int row, int col);
+	static CSR* transpose(const CSR* stor);
+	bool is_transpose_of(CSR* other);
+	bool operator == (const CSR & rhs) const;
+	void init_cosine_storage();
+	float compute_cosines(int row_i, int row_j, bool UseUserAverages);
+	float* compute_cosines_for(int row_i, bool UseUserAverages);
 
+	//virtual dimentions
+	int rows = 0;
+	int columns = 0;
+	int nonZeroValues = 0;
+
+	//size of base storage
+	int ratingVals_size = 0;
+	int columnIndex_size = 0;
+	int rowPtr_size = 0;
+
+	//base storage
+	int* ratingVals = nullptr;
+	int* columnIndex = nullptr;
+	int* rowPtr = nullptr;
+
+  //special storage to avoid recomputing
+	float* row_averages = nullptr;
+
+  void compute_row_averages();
 
 };
+
 #include "CSR.cpp"
-#endif /* CSR_h */
+
+#endif //_CSR_H_ defined

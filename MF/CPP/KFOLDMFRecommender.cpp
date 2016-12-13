@@ -39,7 +39,7 @@ void KFOLDMFRecommender::cleanUpPandQ(CSR * trainingSet)
         pMatrix[i] = nullptr;
     }
     for(int i = 0; i<trainingSet->columns; i++){
-        
+
         delete [] qMatrix[i];
         qMatrix[i] = nullptr;
     }
@@ -65,7 +65,7 @@ double KFOLDMFRecommender::fFunction(CSR * trainingSet)
 {
     double pNorm = fNorm(pMatrix, trainingSet->rows);
     double qNorm = fNorm(qMatrix, trainingSet->columns);
-    
+
     double lambdaQuantity = (pNorm + qNorm) * lambdaVal;
     double fSum = 0.0;
     for(int i = 0; i < trainingSet->rows;i++)
@@ -116,7 +116,7 @@ void KFOLDMFRecommender::LS_GD(CSR * dataSet, double ** fixedMatrix, double ** s
             double sumMult = (dataSet->ratingVals[j] - dotProduct);
             for(int k = 0; k < kVal; k++){
                 sumMatrix[k] = fixedMatrix[dataSet->columnIndex[j]][k] * sumMult;
-                
+
             }
         }
         double * newP = new double[kVal];
@@ -124,7 +124,7 @@ void KFOLDMFRecommender::LS_GD(CSR * dataSet, double ** fixedMatrix, double ** s
             newItem[j] = solvingMatrix[i][j] * lambdaValue;
             sumMatrix[j] = sumMatrix[j] * (learningRate * 2);
             newP[j] = sumMatrix[j] + newItem[j];
-            
+
         }
         double * temp = solvingMatrix[i];
         solvingMatrix[i] = newP;
@@ -139,22 +139,22 @@ void KFOLDMFRecommender::trainSystem(CSR * trainingSet, CSR * transposeSet)
     double lastIter = 0.0;
 
     while(i <  iterations){
-        
+
         LS_GD(trainingSet, qMatrix, pMatrix, 0.025, "p");
-        
+
         LS_GD(transposeSet, pMatrix, qMatrix, 0.025, "q");
-        
+
         double curIter = fFunction(trainingSet);
-        
+
         if(i > 0 && sqrt(pow((curIter - lastIter),2)/lastIter) < epsVal){
             break;
         } else {
           lastIter = curIter;
         }
         i++;
-        
+
     }
-    
+
 
 }
 
@@ -196,15 +196,15 @@ void KFOLDMFRecommender::kFoldsTest(std::string trainStart, std::string testStar
     for(int i = 1; i < 6; i++)
     {
         CSR * trainingSet = new CSR(trainStart + std::to_string(i) +".txt");
-        CSR * transposeSet = new CSR(trainStart + std::to_string(i) + ".txt");
-        transposeSet->transpose();
+        CSR * transposeSet = CSR::transpose(trainingSet);
+        // transposeSet->transpose();
         CSR * testingSet = new CSR(testStart + std::to_string(i) + ".txt");
         CSR * coldSet = new CSR(coldStart + std::to_string(i) + ".txt");
         createPandQ(trainingSet);
-        
+
         clock_t trainStart = clock();
         trainSystem(trainingSet, transposeSet);
-        
+
         clock_t trainFinish = clock();
         clock_t testStart = clock();
         double mse = mSE(testingSet);
@@ -229,22 +229,22 @@ void KFOLDMFRecommender::kFoldsTest(std::string trainStart, std::string testStar
         outfile << (double)(testFinish - testStart)/CLOCKS_PER_SEC;
         outfile << "\n";
         cleanUpPandQ(trainingSet);
-        
+
         delete trainingSet;
-        
+
         delete transposeSet;
-        
+
         delete testingSet;
-        
+
         delete coldSet;
-        
+
     }
     outfile.close();
 }
 
-double KFOLDMFRecommender::createAverageUser(CSR * trainingSet)
+double* KFOLDMFRecommender::createAverageUser(CSR * trainingSet)
 {
-    double averageUser[kVal];
+    double* averageUser = new double[kVal];
     for(int i = 0; i < trainingSet->rows; i++)
     {
         for(int j = 0; j < kVal; j++)
@@ -274,7 +274,7 @@ void KFOLDMFRecommender::coldStartTesting(CSR * coldSet, double * averageUser)
         for(int j = coldSet->rowPtr[i]; j < coldSet->rowPtr[i+1]; i++)
         {
             double ratingPrediction = funcDotProduct(newUserMatrix[i],qMatrix[coldSet->columnIndex[j]]);
-            
+
             double sumMult = (coldSet->ratingVals[j] - dotProduct);
             for(int k = 0; k < kVal; k++){
                 sumMatrix[k] = qMatrix[coldSet->columnIndex[j]][k] * sumMult;
@@ -287,12 +287,12 @@ void KFOLDMFRecommender::coldStartTesting(CSR * coldSet, double * averageUser)
             newItem[j] = newUserMatrix[i][j] * lambdaValue;
             sumMatrix[j] = sumMatrix[j] * (learningRate * 2);
             newP[j] = sumMatrix[j] + newItem[j];
-            
+
         }
         double * temp = newUserMatrix[i];
         coldSet[i] = newP;
         delete temp;
-        
+
     }
     //determine how quickly you get to ideal rating prediction
 
