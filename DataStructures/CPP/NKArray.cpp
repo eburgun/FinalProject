@@ -1,9 +1,9 @@
 #include "NKArray.h"
 
-NKArray::NKArray(int items,int kValue)
+NKArray::NKArray(int items,int kratingValsue)
 {
     rows = items;
-    columns = 2*kValue;
+    columns = 2*kratingValsue;
     similarities = new float*[rows];
     index = new int*[rows];
     for (int i = 0; i < rows; i++)
