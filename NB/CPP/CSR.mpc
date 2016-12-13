@@ -1,0 +1,24 @@
+project (CSR) {
+  exename = CSR
+
+  specific (make) {
+    compile_flags += -std=c++11
+  }
+
+  Template_Files {
+    CSR.cpp
+  }
+
+  Source_Files {
+    driver.cpp
+  }
+
+  Header_Files {
+    CSR.h
+    Helpers.h
+  }
+
+  Inline_Files {
+
+  }
+}
