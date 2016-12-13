@@ -95,18 +95,18 @@ CSR::~CSR()
 
 int CSR::getElement(int row, int col)
 {
-	if (row < 1 || row > rows || col < 1 || col > columns)
-	{
-		throw std::out_of_range("InratingValsid index ratingValsue (remember that indexing is Matlab style)");
-	}
+  int element = 0;
+  if(row < rows && col < columns) {
+      for(int i = rowPtr[row]; i < rowPtr[row+1];i++) {
+          if(columnIndex[i] == col) {
+              element = ratingVals[i];
+          }
+      }
+  } else {
+      std::cout << "Value not in matrix" << std::endl;
+  }
 
-	//input is matlab style but storage is still 0 index based
-	for (int p = rowPtr[row - 1]; p < rowPtr[row]; p++) {
-		if (columnIndex[p - 1] == col)
-			return ratingVals[p - 1];
-	}
-
-	return 0;
+  return element;
 }
 
 CSR* CSR::transpose(const CSR* in_)
