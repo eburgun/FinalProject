@@ -30,12 +30,12 @@ int main(void)
     std::string fileName = "SmallColdStartTrain.txt";
     int numRows = 943;
     int numCols = 1682;
-    int numRatings = i * 10; //per row
+    int numRatings = 0; //total
 
     //setup output file
     std::ofstream outputFile(folderPath + fileName);
-    //write first row
-    outputFile << numRows << " " << numCols << " " << (numRows * numRatings) << std::endl;
+    // //write first row
+    // outputFile << numRows << " " << numCols << " " << (numRows * numRatings) << std::endl;
 
     for(int row = 0; row < numRows; row++)
     {
@@ -44,6 +44,8 @@ int main(void)
       std::stringstream ss(inputLine);
       for(int col = 0; col < i * 20 && ss >> token; col++)
       {
+        if(col % 2 == 0)
+          numRatings += 1;
         outputFile << token << " ";
       }
       outputFile << std::endl;
@@ -51,6 +53,17 @@ int main(void)
 
     outputFile.close();
     sourceFile.close();
+
+    //insert the first line to correct numRatings
+    std::fstream fixedOutputFile(folderPath + fileName);
+
+    std::stringstream fileData;
+    fileData << numRows << " " << numCols << " " << numRatings << std::endl;
+    fileData << fixedOutputFile.rdbuf();
+    fixedOutputFile.close();
+
+    fixedOutputFile.open(folderPath + fileName, std::fstream::out | std::fstream::trunc);
+    fixedOutputFile << fileData.rdbuf();
 
   }
   return 0;

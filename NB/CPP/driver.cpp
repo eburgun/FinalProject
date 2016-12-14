@@ -21,9 +21,11 @@ int main()
 
   for(int i = 1; i <= 11; i++)
   {
-    //TODO: fix seg fault caused when not skipping 6
-    if(i == 6)
+    //TODO: fix seg fault caused when not skipping these
+    if(i == 5 || i == 6 || i == 7)
       continue;
+
+    std::cout << "Training with: " << i << std::endl;
 
     std::string training_file_path = "../../Datasets/ColdTests/Ratings/" + std::to_string(i) + std::to_string(0) + "/";
     std::string training_file_name = "SmallColdStartTrain.txt";
