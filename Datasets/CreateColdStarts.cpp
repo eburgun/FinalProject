@@ -13,7 +13,7 @@ int main(void)
   std::string sourceFileName = "OriginalDataSets/SmallTrainSet.txt";
 
   //take i * 10 first rating of each user and store these as new files
-  for(int i = 0; i < 11; i++)
+  for(int i = 1; i < 11; i++)
   {
     std::ifstream sourceFile(sourceFileName);
     std::string inputLine;

@@ -19,10 +19,13 @@ int main()
 
   std::vector<std::pair<float, float>> results;
 
-  for(int i = 1; i < 6; i++)
+  for(int i = 1; i <= 5; i++)
   {
-    std::string training_file = "TrainingSet/SmallTrainingSet" + std::to_string(i) + ".txt";
-    std::string test_file = "TestingSet/SmallTestingSet" + std::to_string(i) + ".txt";
+    std::string training_file_path = "../../Datasets/ColdTests/Ratings/" + std::to_string(i) + std::to_string(0) + "/";
+    std::string training_file_name = "SmallColdStartTrain.txt";
+    std::string training_file = training_file_path + training_file_name;
+
+    std::string test_file = "../../Datasets/OriginalDataSets/SmallTestSet.txt";
     Recommender my_recommender(training_file, test_file, k_val, n_val, out_file);
     my_recommender.recommendations();
 
