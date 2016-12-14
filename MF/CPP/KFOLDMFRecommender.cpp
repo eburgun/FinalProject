@@ -192,6 +192,7 @@ void KFOLDMFRecommender::kFoldsTest(std::string trainStart, std::string testStar
     std::ofstream outfile ("kFoldsResults.txt");
     for(int i = 1; i < 6; i++)
     {
+        
         CSR * trainingSet = new CSR(trainStart + std::to_string(i) +".txt");
         CSR * transposeSet = new CSR(trainStart + std::to_string(i) + ".txt");
         transposeSet->transpose();
@@ -205,7 +206,13 @@ void KFOLDMFRecommender::kFoldsTest(std::string trainStart, std::string testStar
         double mse = mSE(testingSet);
         double rmse = rMSE(mse);
         double * averageUser = createAverageUser(trainingSet);
+        
+        
+        
+        
+        
         coldStartTesting(coldSet, averageUser);
+        /*
         clock_t testFinish = clock();
         outfile << kVal;
         outfile << " ";
@@ -224,6 +231,7 @@ void KFOLDMFRecommender::kFoldsTest(std::string trainStart, std::string testStar
         outfile << (double)(testFinish - testStart)/CLOCKS_PER_SEC;
         outfile << "\n";
         cleanUpPandQ(trainingSet);
+        */
         
         delete trainingSet;
         
@@ -270,7 +278,7 @@ void KFOLDMFRecommender::coldStartTesting(CSR * coldSet, double * averageUser)
         double sumMatrix[kVal];
         for(int j = coldSet->rowPtr[i]; j < coldSet->rowPtr[i+1]; i++)
         {
-            std::cout << "before rating predict" << std::endl;
+            std::cout << coldSet->columnIndex[j] << std::endl;
             double ratingPrediction = funcDotProduct(newUserMatrix[i],qMatrix[coldSet->columnIndex[j]]);
             std::cout << "before sumMult" << std::endl;
             double sumMult = (coldSet->ratingVals[j] - ratingPrediction);

@@ -11,6 +11,11 @@
 CSR::CSR(std::string fileName)
 {
     std::ifstream file(fileName.c_str());
+    if (!file.is_open())
+	{
+		std::cout << "Failed to read file: " << fileName << std::endl;
+		return;
+	}
     std::string line;
     int increment = 0;
     while (std::getline(file,line)) {
