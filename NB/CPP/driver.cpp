@@ -1,4 +1,5 @@
 #include <string>
+#include <vector>
 
 #include "Helpers.h"
 #include "CSR.h"
@@ -16,15 +17,24 @@ int main()
   int k_val = 3;
   int n_val = 5;
 
-  Recommender my_recommender(training_file, test_file, k_val, n_val, out_file);
+  std::vector<std::pair<float, float>> results;
 
-  my_recommender.recommendations();
+  for(int i = 1; i < 6; i++)
+  {
+    std::string training_file = "TrainingSet/SmallTrainingSet" + std::to_string(i) + ".txt";
+    std::string test_file = "TestingSet/SmallTestingSet" + std::to_string(i) + ".txt";
+    Recommender my_recommender(training_file, test_file, k_val, n_val, out_file);
+    my_recommender.recommendations();
 
-  std::pair<float, float> hit_rate = my_recommender.test_recs_HR();
-  Helpers::print_line("Hit rate");
-  Helpers::print_line(hit_rate.first);
+    results.push_back(my_recommender.test_recs_HR());
+  }
 
-  Helpers::print_line("ARHR");
-  Helpers::print_line(hit_rate.second);
+  for(size_t i = 0; i < results.size(); i++)
+  {
+    std::cout << "Result: " << (i + 1) << std::endl;
+    std::cout << "HitRate: " << results[i].first << std::endl;
+    std::cout << "ARHR: " << results[i].second << std::endl;
+  }
+
   return 0;
 }
