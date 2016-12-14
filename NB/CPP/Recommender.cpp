@@ -1,6 +1,6 @@
 Recommender::Recommender(std::string training_file, std::string test_file, int k_val, int n_val, std::string out_file)
 {
-  clock_t timer = ::Helpers::TimerStart();
+  // clock_t timer = ::Helpers::TimerStart();
 
   this->n_value = n_val;
   this->k_value = k_val;
@@ -12,7 +12,7 @@ Recommender::Recommender(std::string training_file, std::string test_file, int k
   this->nk_built = false;
   this->k_changed = false;
 
-  ::Helpers::TimerEnd("Setup finished in: ", timer);
+  // ::Helpers::TimerEnd("Setup finished in: ", timer);
 }
 
 Recommender::~Recommender(void)
@@ -41,8 +41,8 @@ void Recommender::recommendations(void)
     this->user_recs.push_back(this->pull_k_top_values(i));
   }
   Helpers::TimerEnd("Finished recommendations in: ", timer);
-  std::cout << "Time spent sorting: " << this->time_spent_sorting << std::endl;
-  std::cout << "Time spent ranking: " << this->time_spent_ranking << std::endl;
+  // std::cout << "Time spent sorting: " << this->time_spent_sorting << std::endl;
+  // std::cout << "Time spent ranking: " << this->time_spent_ranking << std::endl;
 }
 
 void Recommender::build_nk_array(void)

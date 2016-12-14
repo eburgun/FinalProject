@@ -19,8 +19,12 @@ int main()
 
   std::vector<std::pair<float, float>> results;
 
-  for(int i = 1; i <= 5; i++)
+  for(int i = 1; i <= 11; i++)
   {
+    //TODO: fix seg fault caused when not skipping 6
+    if(i == 6)
+      continue;
+
     std::string training_file_path = "../../Datasets/ColdTests/Ratings/" + std::to_string(i) + std::to_string(0) + "/";
     std::string training_file_name = "SmallColdStartTrain.txt";
     std::string training_file = training_file_path + training_file_name;
