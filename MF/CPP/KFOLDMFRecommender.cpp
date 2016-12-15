@@ -324,32 +324,6 @@ void KFOLDMFRecommender::coldStartTesting(CSR * coldSet, double * averageUser)
             }
             int usersNext = untrainedItem[randomValue];
             untrainedItem[randomValue] = -1;
-            //train on new item
-            /*
-             *
-             *
-             *
-             *
-             *
-             *
-             *
-             *
-             *
-             *
-             *
-             *
-             *
-             *
-             */
-            double sumMatrix[kVal];
-            double lambdaValue = 1 -(lambdaVal * .025 * 2);
-            double dotProduct = funcDotProduct(newUserMatrix[i], qMatrix[usersNext]);
-            double sumMult = (untrainedRatings[randomValue] - dotProduct);
-            
-            for(int k = 0; k < kVal; k++)
-            {
-                sumMatrix[k] = qMatrix[usersNext][k]* sumMult;
-            }
             
             trainedItems++;
             for(int j = 0; j < 20; j ++)
