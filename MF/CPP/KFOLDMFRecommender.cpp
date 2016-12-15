@@ -17,6 +17,7 @@ void KFOLDMFRecommender::createPandQ(CSR * trainingSet)
     for(int i = 0; i < trainingSet->rows; i++){
         pMatrix[i] = new double[kVal];
         for(int j = 0; j < kVal; j++){
+            
             pMatrix[i][j] = (double)rand() / (double)RAND_MAX;
         }
 
@@ -24,6 +25,7 @@ void KFOLDMFRecommender::createPandQ(CSR * trainingSet)
     for(int i = 0; i < trainingSet->columns; i++){
         qMatrix[i] = new double[kVal];
         for(int j = 0; j< kVal; j++){
+            
             qMatrix[i][j] = (double)rand() / (double)RAND_MAX;
         }
     }
@@ -190,17 +192,13 @@ void KFOLDMFRecommender::kFoldsTest(std::string trainStart, std::string testStar
         clock_t trainStartTime = clock();
         trainSystem(trainingSet, transposeSet);
         clock_t trainFinish = clock();
-        std::cout << std::to_string((double)(trainFinish - trainStartTime)/CLOCKS_PER_SEC);
+        std::cout << std::to_string((double)(trainFinish - trainStartTime)/CLOCKS_PER_SEC) + " ";
         clock_t testStartTime = clock();
         double mse = mSE(testingSet);
         double rmse = rMSE(mse);
-        double * averageUser = createAverageUser(trainingSet);
         
-        for(int i = 0; i < kVal; i++)
-        {
-            std::cout << std::to_string(averageUser[i]) + " ";
-        }
-        std::cout << std::endl;
+        double * averageUser = createAverageUser(trainingSet);
+        /*
         int * trained = new int[trainingSet->columns];
         for(int i = 0; i < 20; i++)
         {
@@ -211,6 +209,8 @@ void KFOLDMFRecommender::kFoldsTest(std::string trainStart, std::string testStar
         {
             std::cout << std::to_string(userRecs[i][0]) + " " + std::to_string(userRecs[i][1]) << std::endl;
         }
+        */
+        coldStartTesting(coldSet, averageUser);
         clock_t testFinish = clock();
         outfile << kVal;
         outfile << " ";
@@ -240,11 +240,13 @@ void KFOLDMFRecommender::kFoldsTest(std::string trainStart, std::string testStar
         delete coldSet;
         
         delete averageUser;
+        /*
         for(int i = 0; i < 20; i ++)
         {
             delete [] userRecs[i];
         }
         delete [] userRecs;
+        */
     outfile.close();
 }
 
@@ -267,6 +269,74 @@ double * KFOLDMFRecommender::createAverageUser(CSR * trainingSet)
 
 void KFOLDMFRecommender::coldStartTesting(CSR * coldSet, double * averageUser)
 {
+    double ** newUserMatrix = new double*[coldSet->rows];
+    double totalHR = 0.0;
+    for(int i = 0; i < coldSet->rows; i++)
+    {
+        double bestPotHit = 0.0;
+        int maxHits = 0;
+        newUserMatrix[i] = new double[kVal];
+        for(int j = 0; j < kVal; j++)
+        {
+            newUserMatrix[i][j] = averageUser[j];
+        }
+        int upcomingItemsCount = coldSet->rowPtr[i+1] - coldSet->rowPtr[i];
+        int * untrainedItem = new int[upcomingItemsCount];
+        int * untrainedRatings = new int[upcomingItemsCount];
+        int trainedItems = 0;
+        for(int j = coldSet->rowPtr[i]; j < coldSet->rowPtr[i+1]; j++){
+            untrainedItem[j-coldSet->rowPtr[i]] = coldSet->columnIndex[j];
+            untrainedRatings[j-coldSet->rowPtr[i]] = coldSet->ratingVals[j];
+        }
+        while(trainedItems < upcomingItemsCount)
+        {
+            double ** userRecs = predictUserRecs(newUserMatrix[i], coldSet->columns, untrainedItem);
+            int hits = 0; 
+            for(int j = 0; j < upcomingItemsCount; j ++)
+            {
+                for(int k = 0; k < 20; k++)
+                {
+                    if(untrainedItem[j] == userRecs[k][1])
+                    {
+                        hits++;
+                    }
+                }
+            }
+            double HR = 0.0;
+            if(upcomingItemsCount - trainedItems < 20)
+            {
+                HR = hits/upcomingItemsCount-trainedItems;
+            }else
+            {
+                HR = hits/20.0;
+            }
+            if(HR >= bestPotHit)
+            {
+                bestPotHit = HR;
+            }
+            /*
+             *TEST RECS HERE
+             **/
+            trainedItems++;
+            for(int j = 0; j < 20; j ++)
+            {
+                delete[] userRecs[j];
+            }
+            delete [] userRecs;
+        }
+        
+        delete [] untrainedItem;
+        delete [] untrainedRatings;
+        totalHR += bestPotHit;
+    }
+    
+    for(int i = 0; i < coldSet->rows; i++)
+    {
+        delete [] newUserMatrix[i];
+    }
+    delete [] newUserMatrix;
+    std::cout << totalHR/coldSet->rows << std::endl;
+    
 /*
  *Method for testing cold start:
  *
@@ -299,11 +369,6 @@ void KFOLDMFRecommender::coldStartTesting(CSR * coldSet, double * averageUser)
 
  */    
 }
-
-
-/*
-    Still need to create formal ratings
-*/
 
 double ** KFOLDMFRecommender::predictUserRecs(double * user, int nItems, int * trained)
 {
@@ -365,7 +430,6 @@ void KFOLDMFRecommender::quickSort(double ** sArray, int arraySize)
 
 void KFOLDMFRecommender::part(double ** sArray, int left, int right)
 {
-
     if((right - left) > 5)
     {
         double pivotValue = pivot(sArray, left, right);
@@ -375,30 +439,18 @@ void KFOLDMFRecommender::part(double ** sArray, int left, int right)
 
         while (i < j)
         {
-
-            while(pivotValue > sArray[--j][0])
-            {
-
-            }
-
-            while (sArray[++i][0] > pivotValue)
-            {
-
-            }
-
+            while(pivotValue > sArray[--j][0]){}
+            while (sArray[++i][0] > pivotValue){}
             if(i < j)
             {
-
                 swapper(sArray,i,j);
             }
-
         }
         swapper(sArray,left + 1, j);
 
         part(sArray,left,j-1);
         part(sArray,j+1,right);
     }
-
     else
     {
         insertionSort(sArray,left,right);
