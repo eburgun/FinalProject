@@ -172,7 +172,7 @@ CSR* CSR::transpose(const CSR* in_)
 
 	//Clock out
 	time_spent = (clock() - start) / (double)CLOCKS_PER_SEC;
-	std::cout << "Transposed in: " << time_spent << " seconds." << std::endl;
+	// std::cout << "Transposed in: " << time_spent << " seconds." << std::endl;
 
 	trans->row_averages = new float[trans->nrows];
 	trans->compute_row_averages();
