@@ -37,12 +37,13 @@ class KFOLDMFRecommender
         double rMSE(double mse);
         void coldStartTesting(CSR * coldSet, double * averageUser);
         double * createAverageUser(CSR * trainingSet);
-        double ** predictUserRecs(double * user, int nItems,int * trained);
+        double ** predictUserRecs(double * user, int nItems,int ** trained, int sizeOfTrained);
         void quickSort(double ** sArray, int arraySize);
         void part(double ** sArray, int left, int right);
         double pivot(double ** sArray, int left, int right);
         void swapper(double ** sArray, int a, int b);
         void insertionSort(double ** sArray, int left, int right);
+        void trainSingleUser(double * userMatrix, int usersItem, int usersRating);
         void LS_GD(CSR * dataSet, double ** fixedMatrix, double ** solvingMatrix,double learningRate, std::string matrixId);
 };
 
