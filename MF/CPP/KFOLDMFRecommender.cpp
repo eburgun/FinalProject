@@ -17,7 +17,7 @@ void KFOLDMFRecommender::createPandQ(CSR * trainingSet)
     for(int i = 0; i < trainingSet->rows; i++){
         pMatrix[i] = new double[kVal];
         for(int j = 0; j < kVal; j++){
-            
+
             pMatrix[i][j] = (double)rand() / (double)RAND_MAX;
         }
 
@@ -25,7 +25,7 @@ void KFOLDMFRecommender::createPandQ(CSR * trainingSet)
     for(int i = 0; i < trainingSet->columns; i++){
         qMatrix[i] = new double[kVal];
         for(int j = 0; j< kVal; j++){
-            
+
             qMatrix[i][j] = (double)rand() / (double)RAND_MAX;
         }
     }
@@ -36,18 +36,18 @@ void KFOLDMFRecommender::cleanUpPandQ(CSR * trainingSet)
     for(int i = 0; i<trainingSet->rows; i++){
         delete [] pMatrix[i];
         pMatrix[i] = NULL;
-        
+
     }
     for(int i = 0; i<trainingSet->columns; i++){
-        
+
         delete [] qMatrix[i];
         qMatrix[i] = NULL;
-       
+
     }
     delete [] pMatrix;
-    
+
     delete [] qMatrix;
-   
+
 }
 
 void KFOLDMFRecommender::changeKValue(int newK, CSR * trainingSet)
@@ -66,7 +66,7 @@ double KFOLDMFRecommender::fFunction(CSR * trainingSet)
 {
     double pNorm = fNorm(pMatrix, trainingSet->rows);
     double qNorm = fNorm(qMatrix, trainingSet->columns);
-    
+
     double lambdaQuantity = (pNorm + qNorm) * lambdaVal;
     double fSum = 0.0;
     for(int i = 0; i < trainingSet->rows;i++)
@@ -119,12 +119,12 @@ void KFOLDMFRecommender::LS_GD(CSR * dataSet, double ** fixedMatrix, double ** s
                 sumMatrix[k] += fixedMatrix[dataSet->columnIndex[j]][k] * sumMult;
             }
         }
-        
+
         for(int j = 0; j < kVal; j++){
             newItem[j] = solvingMatrix[i][j] * lambdaValue;
             sumMatrix[j] = sumMatrix[j] * (2 * learningRate);
             solvingMatrix[i][j] = sumMatrix[j] + newItem[j];
-        }      
+        }
     }
 }
 
@@ -134,22 +134,22 @@ void KFOLDMFRecommender::trainSystem(CSR * trainingSet, CSR * transposeSet)
     double lastIter = 0.0;
 
     while(i <  iterations){
-        
+
         LS_GD(trainingSet, qMatrix, pMatrix, 0.0005, "p");
-        
+
         LS_GD(transposeSet, pMatrix, qMatrix, 0.0005, "q");
-        
+
         double curIter = fFunction(trainingSet);
-        
+
         if(i > 0 && sqrt(pow((curIter - lastIter),2)/lastIter) < epsVal){
             break;
         } else {
           lastIter = curIter;
         }
         i++;
-        
+
     }
-    
+
 
 }
 
@@ -177,8 +177,8 @@ double KFOLDMFRecommender::rMSE(double mse)
 void KFOLDMFRecommender::kFoldsTest(std::string trainStart, std::string testStart, std::string coldStart)
 {
     std::ofstream outfile ("kFoldsResults.txt");
-    
-        
+
+
         CSR * trainingSet = new CSR(trainStart + std::to_string(1) +".txt");
         CSR * transposeSet = new CSR(trainStart + std::to_string(1) + ".txt");
         transposeSet->transpose();
@@ -192,7 +192,7 @@ void KFOLDMFRecommender::kFoldsTest(std::string trainStart, std::string testStar
         clock_t testStartTime = clock();
         double mse = mSE(testingSet);
         double rmse = rMSE(mse);
-        
+
         double * averageUser = createAverageUser(trainingSet);
 
         coldStartTesting(coldSet, averageUser,trainingSet);
@@ -214,24 +214,18 @@ void KFOLDMFRecommender::kFoldsTest(std::string trainStart, std::string testStar
         outfile << (double)(testFinish - testStartTime)/CLOCKS_PER_SEC;
         outfile << "\n";
         cleanUpPandQ(trainingSet);
-        
-        
+
+
         delete trainingSet;
-        
+
         delete transposeSet;
-        
+
         delete testingSet;
-        
+
         delete coldSet;
-        
+
         delete averageUser;
-        /*
-        for(int i = 0; i < 20; i ++)
-        {
-            delete [] userRecs[i];
-        }
-        delete [] userRecs;
-        */
+
     outfile.close();
 }
 
@@ -257,37 +251,37 @@ double * KFOLDMFRecommender::createAverageUser(CSR * trainingSet)
 }
 void KFOLDMFRecommender::trainSingleUser(double * userMatrix, int usersItem, int usersRating)
 {
-    
+
     double learningRate = 0.0005;
     double lambdaValue = 1 - (lambdaVal * learningRate * 2);
     double userItem[kVal];
     double sumItemErrors[kVal];
     double userDotProduct = funcDotProduct(userMatrix,qMatrix[usersItem]);
     double userRatingError = (usersRating - userDotProduct);
-    
+
     for(int i =0; i < kVal; i++)
     {
         sumItemErrors[i] = qMatrix[usersItem][i] * userRatingError;
 
         userItem[i] = userMatrix[i] * lambdaValue;
 
-        sumItemErrors[i] = sumItemErrors[i] * (learningRate * 2);
+        sumItemErrors[i] = sumItemErrors[i] * (learningRate * 200);
 
         userMatrix[i] = sumItemErrors[i] + userItem[i];
     }
-    
+
     double itemsUser[kVal];
     double sumUserErrors[kVal];
     double itemDotProduct = funcDotProduct(qMatrix[usersItem],userMatrix);
     double itemRatingError = (usersRating - itemDotProduct);
-    
+
     for(int i = 0; i < kVal; i++)
     {
         sumUserErrors[i] = userMatrix[i] * itemRatingError;
         itemsUser[i] = qMatrix[usersItem][i] * lambdaValue;
         sumUserErrors[i] = sumUserErrors[i] * (learningRate * 2);
         qMatrix[usersItem][i] = sumUserErrors[i] + itemsUser[i];
-    }    
+    }
 }
 void KFOLDMFRecommender::coldStartTesting(CSR * coldSet, double * averageUser, CSR * trainingSet)
 {
@@ -301,10 +295,10 @@ void KFOLDMFRecommender::coldStartTesting(CSR * coldSet, double * averageUser, C
             newUserMatrix[i][j] = averageUser[j];
         }
     }
-    
+
     for(int i = 0; i < coldSet->rows; i++)
     {
-        std::cout << "Cold Start User #" + std::to_string(i) + ":" << std::endl; 
+        std::cout << "Cold Start User #" + std::to_string(i) + ":" << std::endl;
         int userItemCount = coldSet->rowPtr[i+1] - coldSet->rowPtr[i];
         int ** untrainedItem = new int*[userItemCount];
         int * untrainedRatings = new int[userItemCount];
@@ -319,23 +313,32 @@ void KFOLDMFRecommender::coldStartTesting(CSR * coldSet, double * averageUser, C
         while(trainedItems <  userItemCount)
         {
 
-            
+
             double ** userRecs = predictUserRecs(newUserMatrix[i], coldSet->columns, untrainedItem, userItemCount, trainingSet);
-            
+
             double hits = 0;
-            
+
             for(int i = 0; i < userItemCount; i++)
             {
                 for(int j = 0; j < 20; j++)
                 {
-                    if(untrainedItem[i][0] == userRecs[j][1])
+                    if(untrainedItem[i][0] == userRecs[j][1] && untrainedItem[i][1] != -1)
                     {
                         hits++;
                     }
                 }
             }
-            std::cout << hits;
-            std::cout << " ";
+            float HR = 0.0;
+            if(userItemCount - trainedItems < 20.0 && hits != 0)
+            {
+                HR = hits / (userItemCount-trainedItems);
+            }
+            else
+            {
+                HR = hits/20.0;
+            }
+            std::cout << std::to_string(HR) + " ";
+            std::cout << std::endl;
             trainedItems++;
             int randomValue = rand() % userItemCount;
             while(untrainedItem[randomValue][1] == -1)
@@ -345,14 +348,14 @@ void KFOLDMFRecommender::coldStartTesting(CSR * coldSet, double * averageUser, C
             int usersNext = untrainedItem[randomValue][0];
             untrainedItem[randomValue][1] = -1;
             trainSingleUser(newUserMatrix[i], usersNext, untrainedRatings[randomValue]);
-            
+
             for(int j = 0; j < 20; j ++)
             {
                 delete[] userRecs[j];
                 userRecs[j] = NULL;
             }
             delete [] userRecs;
-            
+
         }
         std::cout << std::endl;
         for(int i = 0; i < userItemCount; i ++)
@@ -363,14 +366,14 @@ void KFOLDMFRecommender::coldStartTesting(CSR * coldSet, double * averageUser, C
         delete [] untrainedItem;
         delete [] untrainedRatings;
     }
-    
+
     for(int i = 0; i < coldSet->rows; i++)
     {
         delete [] newUserMatrix[i];
     }
     delete [] newUserMatrix;
 
-    
+
 /*
  *Method for testing cold start:
  *
@@ -384,24 +387,24 @@ void KFOLDMFRecommender::coldStartTesting(CSR * coldSet, double * averageUser, C
  *          choose random item from [untrained]. (Consider weighting based on hits)
  *          Calculate HR, ARHR, Predicted Rating Error (accumulate with total metrics)
  *
- *      else: 
+ *      else:
  *          choose random item from [untrained].
  *          //accumulate total, HR, ARHR
         train dataSet for new user and random item
         Save current change in hr, arhr, and error
-        
+
     calculate mse, rmse
     calculate total hr, arhr for user
-    
+
     //Also consider
     trained Items
     error per new item addition
     total hr, arhr, mse, rmse per user-addressed
     total hr, arhr, mse, rmse per userSet
-    
-    
 
- */    
+
+
+ */
 }
 
 double ** KFOLDMFRecommender::predictUserRecs(double * user, int nItems, int ** trained, int sizeOfTrained, CSR * trainingSet)
@@ -412,127 +415,70 @@ double ** KFOLDMFRecommender::predictUserRecs(double * user, int nItems, int ** 
     {
         recommendations[i] = new double[2];
         recommendations[i][0] = 0;
-        recommendations[i][1] = 0;
+        recommendations[i][1] = -1;
     }
-    int coldStartValue = 0;
-    for(int i = 0; i < sizeOfTrained; i++)
+
+    double ** userBase = new double*[trainingSet->rows];
+    for(int i = 0; i < trainingSet->rows; i++)
     {
-        if(trained[i][1] == -1)
-        {
-            coldStartValue++;
-        }
+        userBase[i] = new double[2];
+        userBase[i][0] = cosSimil(pMatrix[i], user);
+        userBase[i][1] = i;
     }
-    if(coldStartValue == 0){
-        double ** ratingPredictions = new double*[nItems];
-        
-        for(int i =0; i < nItems; i ++)
-        {
-            ratingPredictions[i] = new double[2];
-            ratingPredictions[i][0] = funcDotProduct(user, qMatrix[i]);
-            ratingPredictions[i][1] = i;
-        }
-        
-        for(int i =0; i < sizeOfTrained; i++)
-        {
-            if(trained[i][1] == -1)
-            {
-                ratingPredictions[trained[i][0]][1] = -1.0;
-            }
-        }
-        quickSort(ratingPredictions, nItems,0);
-        int i = 0;
-        int inNVals = 0;
-        while(i < nItems && inNVals < n)
-        {
-            if(ratingPredictions[i][1] != -1)
-            {
-                recommendations[inNVals] = new double[2];
-                recommendations[inNVals][0] = ratingPredictions[i][0];
-                recommendations[inNVals][1] = ratingPredictions[i][1];
-                inNVals++;
-            }
-            i++;
-        }
-        
-        if(inNVals < n)
-        {
-            for(int j = inNVals; j < n; j++)
-            {
-                recommendations[j] = new double[2];
-                recommendations[j][0] = 0.0;
-                recommendations[j][1] = -1.0;
-            }
-        }
-        for(int j = 0; j < nItems; j ++)
-        {
-            delete [] ratingPredictions[j];
-            ratingPredictions[j] = NULL;
-        }
-        delete [] ratingPredictions;
-    }
-    /*
-     * New recommendation engine for when user has been trained.
-     * find most similar movies to movies user has rated. Create list of 20 most similar movies.
-     * determine rating predictions for each and organize based on rating prediction.
-     */
-    else
+
+    quickSort(userBase,trainingSet->rows,0);
+    int similarUsers[kVal];
+    for(int i = 0; i < kVal; i++)
     {
-        double ** userBase = new double*[trainingSet->rows];
-        for(int i = 0; i < trainingSet->rows; i++)
+        similarUsers[i] = userBase[i][1];
+    }
+    double ** ratingPredictions = new double*[trainingSet->columns];
+    for(int i = 0; i < trainingSet->columns; i++)
+    {
+        ratingPredictions[i] = new double[2];
+        ratingPredictions[i][0] = 0.0;
+        ratingPredictions[i][1] = i;
+    }
+    for(int i = 0; i < kVal; i++)
+    {
+        for(int j = trainingSet->rowPtr[similarUsers[i]]; j < trainingSet->rowPtr[similarUsers[i]+1];j++)
         {
-            userBase[i] = new double[2];
-            userBase[i][0] = cosSimil(pMatrix[i], user);
-            userBase[i][1] = i;
+            ratingPredictions[trainingSet->columnIndex[j]][0]++;
         }
-        
-        quickSort(userBase,trainingSet->rows,0);
-        int similarUsers[kVal];
-        for(int i = 0; i < kVal; i++)
+    }
+    quickSort(ratingPredictions,trainingSet->columns,0);
+    int x = 0;
+    int inRecs = 0;
+    while(x < trainingSet->columns && inRecs < n)
+    {
+        bool inTrained = false;
+        for(int i = 0; i < sizeOfTrained; i++)
         {
-            similarUsers[i] = userBase[i][1];
-        }
-        double ** ratingPredictions = new double*[trainingSet->columns];
-        for(int i = 0; i < trainingSet->columns; i++)
-        {
-            ratingPredictions[i] = new double[3];
-            ratingPredictions[i][0] = 0.0;
-            ratingPredictions[i][1] = i;
-            ratingPredictions[i][2] = 0;
-        }
-        for(int i = 0; i < kVal; i++)
-        {
-            for(int j = trainingSet->rowPtr[similarUsers[i]]; j < trainingSet->rowPtr[similarUsers[i]+1];j++)
+            if(ratingPredictions[x][1] == trained[i][0] && trained[i][1] == -1)
             {
-                ratingPredictions[trainingSet->columnIndex[j]][2]++;
+                inTrained = true;
             }
         }
-        quickSort(ratingPredictions,trainingSet->columns,2);
-        
-        for(int i = 0; i < trainingSet->columns; i++)
+        if(!inTrained)
         {
-            std::cout << ratingPredictions[i][0];
-            std::cout << " ";
-            std::cout << ratingPredictions[i][1];
-            std::cout << " ";
-            std::cout << ratingPredictions[i][2] << std::endl;
+            recommendations[inRecs][0] = funcDotProduct(user,qMatrix[int(ratingPredictions[x][1])]);
+            recommendations[inRecs][1] = ratingPredictions[x][1];
+            inRecs++;
         }
-        std::cout << std::endl;
-        std::cin.ignore();
-        for(int i = 0; i < trainingSet->columns; i++)
-        {
-            delete [] ratingPredictions[i];
-        }
-        delete [] ratingPredictions;
-        for(int i = 0; i < trainingSet->rows; i++)
-        {
-            delete [] userBase[i];
-        }
-        delete [] userBase;
+        x++;
     }
-    
-    
-    
-    
+
+    for(int i = 0; i < trainingSet->columns; i++)
+    {
+        delete [] ratingPredictions[i];
+    }
+    delete [] ratingPredictions;
+    for(int i = 0; i < trainingSet->rows; i++)
+    {
+        delete [] userBase[i];
+    }
+    delete [] userBase;
+
     return recommendations;
 }
 double KFOLDMFRecommender::cosSimil(double * a, double * b)
