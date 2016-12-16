@@ -135,9 +135,9 @@ void KFOLDMFRecommender::trainSystem(CSR * trainingSet, CSR * transposeSet)
 
     while(i <  iterations){
 
-        LS_GD(trainingSet, qMatrix, pMatrix, 0.0005, "p");
+        LS_GD(trainingSet, qMatrix, pMatrix, 0.00005, "p");
 
-        LS_GD(transposeSet, pMatrix, qMatrix, 0.0005, "q");
+        LS_GD(transposeSet, pMatrix, qMatrix, 0.00005, "q");
 
         double curIter = fFunction(trainingSet);
 
@@ -176,45 +176,17 @@ double KFOLDMFRecommender::rMSE(double mse)
 
 void KFOLDMFRecommender::kFoldsTest(std::string trainStart, std::string testStart, std::string coldStart)
 {
-    std::ofstream outfile ("kFoldsResults.txt");
-
-
-        CSR * trainingSet = new CSR(trainStart + std::to_string(1) +".txt");
-        CSR * transposeSet = new CSR(trainStart + std::to_string(1) + ".txt");
+    std::string outPutFile = "kFoldsResults";
+    for(int i = 1; i < 2; i ++)
+    {
+        std::ofstream outfile (outPutFile + std::to_string(i) + ".txt");
+        CSR * trainingSet = new CSR(trainStart + std::to_string(i) +".txt");
+        CSR * transposeSet = new CSR(trainStart + std::to_string(i) + ".txt");
         transposeSet->transpose();
-        CSR * testingSet = new CSR(testStart + std::to_string(1) + ".txt");
-        CSR * coldSet = new CSR(coldStart + std::to_string(1) + ".txt");
-        createPandQ(trainingSet);
-        clock_t trainStartTime = clock();
-        trainSystem(trainingSet, transposeSet);
-        clock_t trainFinish = clock();
-        std::cout << std::to_string((double)(trainFinish - trainStartTime)/CLOCKS_PER_SEC) + " ";
-        clock_t testStartTime = clock();
-        double mse = mSE(testingSet);
-        double rmse = rMSE(mse);
-
-        double * averageUser = createAverageUser(trainingSet);
-
-        coldStartTesting(coldSet, averageUser,trainingSet);
-        clock_t testFinish = clock();
-        outfile << kVal;
-        outfile << " ";
-        outfile << lambdaVal;
-        outfile << " ";
-        outfile << iterations;
-        outfile << " ";
-        outfile << epsVal;
-        outfile << " ";
-        outfile << mse;
-        outfile << " ";
-        outfile << rmse;
-        outfile << " ";
-        outfile << (double)(trainFinish - trainStartTime)/CLOCKS_PER_SEC;
-        outfile << " ";
-        outfile << (double)(testFinish - testStartTime)/CLOCKS_PER_SEC;
-        outfile << "\n";
-        cleanUpPandQ(trainingSet);
-
+        CSR * testingSet = new CSR(testStart + std::to_string(i) + ".txt");
+        CSR * coldSet = new CSR(coldStart + std::to_string(i) + ".txt");
+        
+        testingMethod(trainingSet,transposeSet,testingSet,coldSet,outfile);
 
         delete trainingSet;
 
@@ -223,10 +195,10 @@ void KFOLDMFRecommender::kFoldsTest(std::string trainStart, std::string testStar
         delete testingSet;
 
         delete coldSet;
+        outfile.close();
+    }
 
-        delete averageUser;
-
-    outfile.close();
+    
 }
 
 double * KFOLDMFRecommender::createAverageUser(CSR * trainingSet)
@@ -252,7 +224,7 @@ double * KFOLDMFRecommender::createAverageUser(CSR * trainingSet)
 void KFOLDMFRecommender::trainSingleUser(double * userMatrix, int usersItem, int usersRating)
 {
 
-    double learningRate = 0.0005;
+    double learningRate = 0.00005;
     double lambdaValue = 1 - (lambdaVal * learningRate * 2);
     double userItem[kVal];
     double sumItemErrors[kVal];
@@ -283,8 +255,9 @@ void KFOLDMFRecommender::trainSingleUser(double * userMatrix, int usersItem, int
         qMatrix[usersItem][i] = sumUserErrors[i] + itemsUser[i];
     }
 }
-void KFOLDMFRecommender::coldStartTesting(CSR * coldSet, double * averageUser, CSR * trainingSet)
+void KFOLDMFRecommender::coldStartTesting(CSR * coldSet, double * averageUser, CSR * trainingSet, std::ofstream& outfile)
 {
+    time_t coldTrainStart = clock();
     double ** newUserMatrix = new double*[coldSet->rows];
     double totalHR = 0.0;
     for(int i = 0; i < coldSet->rows; i++)
@@ -298,7 +271,9 @@ void KFOLDMFRecommender::coldStartTesting(CSR * coldSet, double * averageUser, C
 
     for(int i = 0; i < coldSet->rows; i++)
     {
-        std::cout << "Cold Start User #" + std::to_string(i) + ":" << std::endl;
+        outfile << "Cold Start User #";
+        outfile << std::to_string(i);
+        outfile << ": \n";
         int userItemCount = coldSet->rowPtr[i+1] - coldSet->rowPtr[i];
         int ** untrainedItem = new int*[userItemCount];
         int * untrainedRatings = new int[userItemCount];
@@ -317,7 +292,8 @@ void KFOLDMFRecommender::coldStartTesting(CSR * coldSet, double * averageUser, C
             double ** userRecs = predictUserRecs(newUserMatrix[i], coldSet->columns, untrainedItem, userItemCount, trainingSet);
 
             double hits = 0;
-
+            double arHits = 0;
+            double cumulativeError = 0.0;
             for(int i = 0; i < userItemCount; i++)
             {
                 for(int j = 0; j < 20; j++)
@@ -325,20 +301,37 @@ void KFOLDMFRecommender::coldStartTesting(CSR * coldSet, double * averageUser, C
                     if(untrainedItem[i][0] == userRecs[j][1] && untrainedItem[i][1] != -1)
                     {
                         hits++;
+                        arHits += 1.0/(j+1);
+                        cumulativeError += pow(untrainedRatings[i] - userRecs[j][0],2);
                     }
                 }
             }
-            float HR = 0.0;
+            float potentialHR = 0.0;
+            float potentialARHR = 0.0;
+            float mse = 0.0;
             if(userItemCount - trainedItems < 20.0 && hits != 0)
             {
-                HR = hits / (userItemCount-trainedItems);
+                potentialHR = hits / (userItemCount-trainedItems);
+                potentialARHR = arHits / (userItemCount-trainedItems);
+                mse = cumulativeError / hits;
             }
-            else
+            else if(hits != 0)
             {
-                HR = hits/20.0;
+                potentialHR = hits/20.0;
+                potentialARHR = arHits/20.0;
+                mse = cumulativeError/hits;
             }
-            std::cout << std::to_string(HR) + " ";
-            std::cout << std::endl;
+            float rmse = sqrt(mse);
+            outfile << "Potential HR: ";
+            outfile << potentialHR;
+            outfile << " Potential ARHR: ";
+            outfile << potentialARHR;
+            outfile << " Hits MSE: ";
+            outfile << mse;
+            outfile << " Hits RMSE: ";
+            outfile << rmse;
+            outfile << "\n";
+            
             trainedItems++;
             int randomValue = rand() % userItemCount;
             while(untrainedItem[randomValue][1] == -1)
@@ -357,7 +350,7 @@ void KFOLDMFRecommender::coldStartTesting(CSR * coldSet, double * averageUser, C
             delete [] userRecs;
 
         }
-        std::cout << std::endl;
+        outfile << "\n";
         for(int i = 0; i < userItemCount; i ++)
         {
             delete [] untrainedItem[i];
@@ -372,39 +365,12 @@ void KFOLDMFRecommender::coldStartTesting(CSR * coldSet, double * averageUser, C
         delete [] newUserMatrix[i];
     }
     delete [] newUserMatrix;
+    outfile << "ColdStart Training Time: ";
+    outfile << (double)(clock() - coldTrainStart) * 1000.0/CLOCKS_PER_SEC;
+    outfile << "\n";
+    outfile << "\n";
 
 
-/*
- *Method for testing cold start:
- *
- *For every user in ColdStartSet:
- *  while(user has [untrained Items]):
- *      Create set of recommendations for the user
- *      get predicted ratings for those recommendations
- *      create [hits] by determining which recommendations exist in [untrained items]
- *
- *      if(!hits.empty()):
- *          choose random item from [untrained]. (Consider weighting based on hits)
- *          Calculate HR, ARHR, Predicted Rating Error (accumulate with total metrics)
- *
- *      else:
- *          choose random item from [untrained].
- *          //accumulate total, HR, ARHR
-        train dataSet for new user and random item
-        Save current change in hr, arhr, and error
-
-    calculate mse, rmse
-    calculate total hr, arhr for user
-
-    //Also consider
-    trained Items
-    error per new item addition
-    total hr, arhr, mse, rmse per user-addressed
-    total hr, arhr, mse, rmse per userSet
-
-
-
- */
 }
 
 double ** KFOLDMFRecommender::predictUserRecs(double * user, int nItems, int ** trained, int sizeOfTrained, CSR * trainingSet)
@@ -563,5 +529,57 @@ void KFOLDMFRecommender::insertionSort(double ** sArray, int left, int right, in
             sArray[j] = sArray[j-1];
         }
         sArray[j] = tmp;
+    }
+}
+
+void KFOLDMFRecommender::testingMethod(CSR * trainingSet, CSR * transposeSet, CSR * testingSet, CSR * coldSet, std::ofstream& outfile)
+{
+    int kVals [] = {10,50};
+    float lambVals[] = {0.01,0.1,1,10};
+    int iters [] = {50,100,200};
+    float epsilonVals [] = {0.0001, 0.001, 0.01};
+    for(int i = 0; i < 2; i++)
+    {
+        kVal = kVals[i];
+        for(int j = 0; j < 4; j++)
+        {
+            lambdaVal = lambVals[j];
+            for(int k = 0; k < 3; k++)
+            {
+                iterations = iters[k];
+                for(int l = 0; l < 3; l++)
+                {
+                    epsVal = epsilonVals[l];
+                    createPandQ(trainingSet);
+                    clock_t trainStart = clock();
+                    trainSystem(trainingSet, transposeSet);
+                    clock_t trainFinish = clock();
+                    clock_t testStart = clock();
+                    float mse = mSE(testingSet);
+                    float rmse = rMSE(mse);
+                    clock_t testFinish = clock();
+                    outfile << kVal;
+                    outfile << " ";
+                    outfile << lambdaVal;
+                    outfile << " ";
+                    outfile << iterations;
+                    outfile << " ";
+                    outfile << epsVal;
+                    outfile << " ";
+                    outfile << mse;
+                    outfile << " ";
+                    outfile << rmse;
+                    outfile << " ";
+                    outfile << (double)(trainFinish - trainStart) * 1000.0/CLOCKS_PER_SEC;
+                    outfile << " ";
+                    outfile << (double)(testFinish - testStart) * 1000.0/CLOCKS_PER_SEC;
+                    outfile << "\n";
+                    double * averageUser = createAverageUser(trainingSet);
+
+                    coldStartTesting(coldSet, averageUser,trainingSet, outfile);
+                    cleanUpPandQ(trainingSet);
+                }
+            }
+        }
     }
 }
