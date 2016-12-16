@@ -135,9 +135,9 @@ void KFOLDMFRecommender::trainSystem(CSR * trainingSet, CSR * transposeSet)
 
     while(i <  iterations){
 
-        LS_GD(trainingSet, qMatrix, pMatrix, 0.00005, "p");
+        LS_GD(trainingSet, qMatrix, pMatrix, 0.0005, "p");
 
-        LS_GD(transposeSet, pMatrix, qMatrix, 0.00005, "q");
+        LS_GD(transposeSet, pMatrix, qMatrix, 0.0005, "q");
 
         double curIter = fFunction(trainingSet);
 
@@ -160,6 +160,7 @@ double KFOLDMFRecommender::mSE(CSR * testingSet)
         for(int j = testingSet->rowPtr[i]; j < testingSet->rowPtr[i+1]; j++){
             double prediction = funcDotProduct(pMatrix[i],qMatrix[testingSet->columnIndex[j]]);
             mse += pow(testingSet->ratingVals[j] - prediction,2);
+            std::cout << prediction << std::endl;
         }
     }
 
@@ -185,7 +186,7 @@ void KFOLDMFRecommender::kFoldsTest(std::string trainStart, std::string testStar
         transposeSet->transpose();
         CSR * testingSet = new CSR(testStart + std::to_string(i) + ".txt");
         CSR * coldSet = new CSR(coldStart + std::to_string(i) + ".txt");
-        
+
         testingMethod(trainingSet,transposeSet,testingSet,coldSet,outfile);
 
         delete trainingSet;
@@ -198,7 +199,7 @@ void KFOLDMFRecommender::kFoldsTest(std::string trainStart, std::string testStar
         outfile.close();
     }
 
-    
+
 }
 
 double * KFOLDMFRecommender::createAverageUser(CSR * trainingSet)
@@ -331,7 +332,7 @@ void KFOLDMFRecommender::coldStartTesting(CSR * coldSet, double * averageUser, C
             outfile << " Hits RMSE: ";
             outfile << rmse;
             outfile << "\n";
-            
+
             trainedItems++;
             int randomValue = rand() % userItemCount;
             while(untrainedItem[randomValue][1] == -1)
