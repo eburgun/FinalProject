@@ -35,7 +35,7 @@ class KFOLDMFRecommender
         void trainSystem(CSR * trainingSet, CSR * transposeSet);
         double mSE(CSR * testingSet);
         double rMSE(double mse);
-        void coldStartTesting(CSR * coldSet, double * averageUser,CSR * trainingSet);
+        void coldStartTesting(CSR * coldSet, double * averageUser,CSR * trainingSet, std::ofstream& outfile);
         double * createAverageUser(CSR * trainingSet);
         double ** predictUserRecs(double * user, int nItems,int ** trained, int sizeOfTrained, CSR * trainingSet);
         void quickSort(double ** sArray, int arraySize,int index);
@@ -46,6 +46,7 @@ class KFOLDMFRecommender
         void trainSingleUser(double * userMatrix, int usersItem, int usersRating);
         double cosSimil(double * a, double * b);
         void LS_GD(CSR * dataSet, double ** fixedMatrix, double ** solvingMatrix,double learningRate, std::string matrixId);
+        void testingMethod(CSR * trainingSet, CSR * transposeSet, CSR * testingSet, CSR * coldSet, std::ofstream& outfile);
 };
 
 #include "KFOLDMFRecommender.cpp"
