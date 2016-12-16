@@ -178,9 +178,10 @@ double KFOLDMFRecommender::rMSE(double mse)
 void KFOLDMFRecommender::kFoldsTest(std::string trainStart, std::string testStart, std::string coldStart)
 {
     std::string outPutFile = "kFoldsResults";
-    for(int i = 1; i < 2; i ++)
+    for(int i = 1; i < 6; i ++)
     {
         std::ofstream outfile (outPutFile + std::to_string(i) + ".txt");
+        time_t kFoldTestingStart = clock();
         CSR * trainingSet = new CSR(trainStart + std::to_string(i) +".txt");
         CSR * transposeSet = new CSR(trainStart + std::to_string(i) + ".txt");
         transposeSet->transpose();
@@ -196,6 +197,9 @@ void KFOLDMFRecommender::kFoldsTest(std::string trainStart, std::string testStar
         delete testingSet;
 
         delete coldSet;
+        outfile << "Total Testing Time: "
+        outfile << (double)(clock() - kFoldTestingStart) * 1000.0/CLOCKS_PER_SEC;
+        outfile << "\n"
         outfile.close();
     }
 
@@ -309,7 +313,7 @@ void KFOLDMFRecommender::coldStartTesting(CSR * coldSet, double * averageUser, C
             }
             float potentialHR = 0.0;
             float potentialARHR = 0.0;
-            float mse = 0.0;
+            double mse = 0.0;
             if(userItemCount - trainedItems < 20.0 && hits != 0)
             {
                 potentialHR = hits / (userItemCount-trainedItems);
@@ -322,7 +326,7 @@ void KFOLDMFRecommender::coldStartTesting(CSR * coldSet, double * averageUser, C
                 potentialARHR = arHits/20.0;
                 mse = cumulativeError/hits;
             }
-            float rmse = sqrt(mse);
+            double rmse = sqrt(mse);
             outfile << "Potential HR: ";
             outfile << potentialHR;
             outfile << " Potential ARHR: ";
@@ -434,7 +438,7 @@ double ** KFOLDMFRecommender::predictUserRecs(double * user, int nItems, int ** 
         }
         x++;
     }
-
+    quickSort(recommendations, 20, 0);
     for(int i = 0; i < trainingSet->columns; i++)
     {
         delete [] ratingPredictions[i];
