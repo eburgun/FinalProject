@@ -24,9 +24,12 @@ public:
   void change_k_value(int new_k);
   void change_out_file(std::string new_file_name);
   std::pair<float, float> test_recs_HR(void);
-  std::vector<int> get_recs_for_user(int user_id, int count);
+
+  void add_cold_start_users(std::string cold_start_file);
+  std::vector<std::vector<int>> get_recs_of_cold_start_users(void);
 
 private:
+  std::vector<int> get_recs_for_user(int user_id, int count);
   void build_nk_array(void);
   void rebuild_nk_array(void);
   void build_wilson_score_intervals(void);

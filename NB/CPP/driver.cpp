@@ -19,7 +19,7 @@ int main()
 
   std::vector<std::pair<float, float>> results;
 
-  for(int i = 1; i <= 2; i++)
+  for(int i = 11; i <= 11; i++)
   {
     //TODO: fix seg fault caused when not skipping these
     if(i == 5 || i == 6 || i == 7)
@@ -33,12 +33,19 @@ int main()
 
     std::string test_file = "../../Datasets/OriginalDataSets/SmallTestSet.txt";
     Recommender my_recommender(training_file, test_file, k_val, n_val, out_file);
-    my_recommender.recommendations();
+    // my_recommender.recommendations();
 
+    // results.push_back(my_recommender.test_recs_HR());
+
+    //now handle cold start
+    my_recommender.add_cold_start_users("../../Datasets/ColdTests/SmallColdStart1.txt");
+    std::vector<std::vector<int>> recs = my_recommender.get_recs_of_cold_start_users();
+    //check what the overall difference is with the new users
     results.push_back(my_recommender.test_recs_HR());
+
   }
 
-  for(size_t i = 0; i < results.size(); i++)
+  for(size_t i = 0; i < results.size() * 2; i++)
   {
     std::cout << "Result: " << (i + 1) << std::endl;
     std::cout << "HitRate: " << results[i].first << std::endl;

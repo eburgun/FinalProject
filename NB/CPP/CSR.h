@@ -27,6 +27,8 @@ public:
 	float compute_cosines(int row_i, int row_j, bool UseUserAverages);
 	float* compute_cosines_for(int row_i, bool UseUserAverages);
 
+  void add_new_users(CSR* new_users);
+
 	//virtual dimentions
 	int nrows = 0;
 	int ncols = 0;
@@ -44,6 +46,9 @@ public:
 
   //special storage to avoid recomputing
 	float* row_averages = nullptr;
+
+  //distinction between old users and cold start users
+  int first_new_user_id = 0;
 
   void compute_row_averages();
 

@@ -77,6 +77,62 @@ CSR::CSR(int rows_, int cols_, int items_): nrows(rows_), ncols(cols_), nitems(i
 
 }
 
+void CSR::add_new_users(CSR* new_users)
+{
+  this->first_new_user_id = this->nrows;
+
+  this->nrows += new_users->nrows;
+	this->nitems += new_users->nitems;
+
+  int new_val_size = this->val_size + new_users->val_size;
+  int new_col_ind_size = this->col_ind_size + new_users->col_ind_size;
+  int new_row_ptr_size = this->row_ptr_size + new_users->nrows;
+
+  int* new_val = new int[new_val_size];
+  int* new_col_ind = new int[new_col_ind_size];
+  int* new_row_ptr = new int[new_row_ptr_size];
+
+  //copy existing col_ind and val data
+  for(int i = 0; i < this->val_size; i++)
+  {
+    new_val[i] = this->val[i];
+    new_col_ind[i] = this->col_ind[i];
+  }
+
+  //fill in the new col and val data from the new data CSR
+  for(int i = 0; i < new_users->val_size; i++)
+  {
+    new_val[i + this->val_size] = new_users->val[i];
+    new_col_ind[i + this->val_size] = new_users->col_ind[i];
+  }
+
+  //copy existing row_ptr data
+  for(int i = 0; i < this->row_ptr_size; i++)
+  {
+    new_row_ptr[i] = this->row_ptr[i];
+  }
+
+  //fill in the row ptr of the new rows
+  for(int i = 0; i < new_users->nrows; i++)
+  {
+    new_row_ptr[i + this->row_ptr_size] = new_row_ptr[this->row_ptr_size - 1] + new_users->row_ptr[i] - 1;
+  }
+
+  //delete old data
+  delete[] this->val;
+  delete[] this->col_ind;
+  delete[] this->row_ptr;
+
+  //switch to new data
+  this->val = new_val;
+  this->col_ind = new_col_ind;
+  this->row_ptr = new_row_ptr;
+
+  this->val_size = new_val_size;
+  this->col_ind_size = new_col_ind_size;
+  this->row_ptr_size = new_row_ptr_size;
+}
+
 CSR::~CSR()
 {
 	// std::cout << "Calling CSR destructor...";
