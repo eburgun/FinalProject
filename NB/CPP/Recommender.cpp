@@ -166,7 +166,7 @@ void Recommender::build_nk_array(void)
 
       //incorporate wilson score lower bound to deal with cold start
       //add some weight to make sure wslb is accounted for
-      int wslb_weight = 1;
+      int wslb_weight = .25;
       //this way items without ratings can never pass over items with ratings
       cosine_array[j] = (cosine_array[j] + wslb_weight) * this->wslb[j];
 
