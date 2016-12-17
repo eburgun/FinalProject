@@ -19,7 +19,7 @@ int main()
 
   std::vector<std::pair<float, float>> results;
 
-  for(int i = 11; i <= 11; i++)
+  for(int i = 1; i <= 2; i++)
   {
     //TODO: fix seg fault caused when not skipping these
     if(i == 5 || i == 6 || i == 7)

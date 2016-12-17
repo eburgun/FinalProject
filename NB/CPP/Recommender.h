@@ -24,10 +24,12 @@ public:
   void change_k_value(int new_k);
   void change_out_file(std::string new_file_name);
   std::pair<float, float> test_recs_HR(void);
+  std::vector<int> get_recs_for_user(int user_id, int count);
 
 private:
   void build_nk_array(void);
   void rebuild_nk_array(void);
+  void build_wilson_score_intervals(void);
   KList pull_k_top_values(int user_id);
 
   //Sorting related
@@ -54,6 +56,9 @@ private:
   //for build/rebuild_nk_array functions
   std::vector<int> length_array;
   std::vector<std::vector<std::pair<float, int>>> nk_array;
+
+  //for wilson score lower bound
+  std::vector<double> wslb;
 
   std::vector<KList> user_recs;
 

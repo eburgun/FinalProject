@@ -45,6 +45,22 @@ void Recommender::recommendations(void)
   std::cout << "Time spent ranking: " << this->time_spent_ranking << std::endl;
 }
 
+//gets the top 'count' recommendations for user with id
+//this assumes that you need it for cold start users, hence the building of nk_array
+std::vector<int> Recommender::get_recs_for_user(int id, int count)
+{
+  //first need to build the nk_array to account for new users and ratings
+  this->build_nk_array();
+
+  std::vector<int> recs;
+  KList list = this->pull_k_top_values(id);
+
+  for(size_t i = 0; i < list.size() && i < count; i++)
+  {
+    recs.push_back(std::get<1>(list[i]));
+  }
+}
+
 void Recommender::build_nk_array(void)
 {
   clock_t timer = ::Helpers::TimerStart();
@@ -65,6 +81,9 @@ void Recommender::build_nk_array(void)
       item_start += 1;
     }
   }
+
+  //set up the wilson score interval array
+  this->build_wilson_score_intervals();
 
   //set up cosine array for each item and fill it with 0s
   float cosine_array[this->training_transpose->nrows];
@@ -109,12 +128,30 @@ void Recommender::build_nk_array(void)
     //for each item again
     for(int j = 0; j < this->training_transpose->nrows; j++)
     {
+      bool store_cosine = true;
       //if both item i and item j have ratings
       if(this->length_array[i] != 0 && this->length_array[j] != 0)
       {
         //divide the numerator of item j with both items
         cosine_array[j] /= ( std::sqrt(this->length_array[i]) * std::sqrt(this->length_array[j]) );
+      }
+      else //if one of item i or j doesn't have ratings
+      {
+        cosine_array[j] = 0;
+        store_cosine = false;
+      }
 
+      //incorporate wilson score lower bound to deal with cold start
+      //add some weight to make sure wslb is accounted for
+      int wslb_weight = 1;
+      //this way items without ratings can never pass over items with ratings
+      cosine_array[j] = (cosine_array[j] + wslb_weight) * this->wslb[j];
+
+
+      //store into dictionary only if significant with 10 ratings
+      bool passes_min_of_wsi = this->wslb[j] > 0.00005; //for at least 10 ratings
+      if(store_cosine && passes_min_of_wsi)
+      {
         if(i < j)
         {
           //if cosine similarity between item i and j doesn't exist
@@ -134,10 +171,6 @@ void Recommender::build_nk_array(void)
             this->cosine_dict[std::make_pair(j, i)] = cosine_array[j];
           }
         }
-      }
-      else //if one of item i or j doesn't have ratings
-      {
-        cosine_array[j] = 0;
       }
 
       //insertion sort of k_size items
@@ -213,6 +246,33 @@ void Recommender::rebuild_nk_array(void)
 
   this->k_changed = false;
   Helpers::TimerEnd("Rebuild Time: ", timer);
+}
+
+void Recommender::build_wilson_score_intervals(void)
+{
+
+  //inspiration https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Wilson_score_interval
+  double n = this->training_data->nitems;
+  this->wslb.reserve(n);
+
+  for(size_t i = 0; i < this->length_array.size(); i++)
+  {
+    //using the lower bound of wilson score interval with 95% confidence
+    //pessimistically weight which items are most popular
+    //the most popular items will be useful for cold start cases
+    //assumes normal distribution
+    double p = (double)this->length_array[i]; //count of positive ratings
+    double z = 1.96; // for 95% ci
+    double pPer = p / n; //% of positive ratings
+
+    double center = (pPer + (z * z) / (2 * n));
+    double difference = (z * sqrt((pPer * ( 1 - pPer ) + z * z / (4 * n)) / n)) / (1 + z * z / n);
+    double wsi = center - difference; //lower bound
+
+    this->wslb.push_back(wsi);
+    // if(p > 20)
+      // std::cout << "Item: " << (i + 1) << ": " << p << ", " << wsi << std::endl;
+  }
 }
 
 KList Recommender::pull_k_top_values(int user_id)
