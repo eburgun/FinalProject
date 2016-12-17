@@ -42,24 +42,18 @@ void Recommender::recommendations(void)
   }
   Helpers::TimerEnd("Finished recommendations in: ", timer);
   // std::cout << "Time spent sorting: " << this->time_spent_sorting << std::endl;
-  // std::cout << "Time spent ranking: " << this->time_spent_ranking << std::endl;
+  std::cout << "Time spent ranking: " << this->time_spent_ranking << std::endl;
 }
 
 void Recommender::build_nk_array(void)
 {
   clock_t timer = ::Helpers::TimerStart();
+
+  //setup length array for each item
+  //initialize all to 0
   this->length_array = std::vector<int>(this->training_transpose->nrows, 0);
 
-  float cosine_array[this->training_transpose->nrows];
-  for(int x = 0; x < this->training_transpose->nrows; x++)
-  {
-    cosine_array[x] = 0.0;
-  }
-
-  //building the nk_array
-  printf("\rAllocating Memory.");
-  std::vector<std::pair<float, int>> nk_temp_array_for_person(this->k_value, std::make_pair(0.0, 0));
-  this->nk_array = std::vector<std::vector<std::pair<float, int>>>(this->training_transpose->nrows, nk_temp_array_for_person);
+  //fill the length array with the sum of all item's ratings squared
   for(size_t i = 0; i < this->length_array.size(); i++)
   {
     int item_start = this->training_transpose->row_ptr[i];
@@ -72,45 +66,66 @@ void Recommender::build_nk_array(void)
     }
   }
 
+  //set up cosine array for each item and fill it with 0s
+  float cosine_array[this->training_transpose->nrows];
+  for(int x = 0; x < this->training_transpose->nrows; x++)
+  {
+    cosine_array[x] = 0.0;
+  }
+
+  //building the nk_array
+  //dimentions: item count rows, 2 * k recirds, containing a pair of cosine simil and col of the pair of cosine
+  printf("\rAllocating Memory.");
+  std::vector<std::pair<float, int>> nk_temp_array_for_person(2 * this->k_value, std::make_pair(0.0, 0));
+  this->nk_array = std::vector<std::vector<std::pair<float, int>>>(this->training_transpose->nrows, nk_temp_array_for_person);
+
+  //for each item
   for(int i = 0; i < this->training_transpose->nrows; i++)
   {
-    // if (i % 100 == 0)
-			// printf("\rBuild Progress: %.2f%%", (double)(i * 100) / this->training_transpose->nrows);
-
-    int item_start = this->training_transpose->row_ptr[i];
-    int item_finish = this->training_transpose->row_ptr[i + 1];
-    while(item_start < item_finish)
+    //first user that rated item i
+    int user_start = this->training_transpose->row_ptr[i];
+    //last user that rated item i
+    int user_finish = this->training_transpose->row_ptr[i + 1];
+    //for each user that rated item i
+    while(user_start < user_finish)
     {
-      int col_start = this->training_data->row_ptr[this->training_transpose->col_ind[item_start]];
-      int col_finish = this->training_data->row_ptr[this->training_transpose->col_ind[item_start] + 1];
+      //first item this user rated
+      int col_start = this->training_data->row_ptr[this->training_transpose->col_ind[user_start]];
+      //last item this user rated
+      int col_finish = this->training_data->row_ptr[this->training_transpose->col_ind[user_start] + 1];
+      //for each item of the user that rated item i
       while(col_start < col_finish)
       {
+        //if this item isn't item i
         if(this->training_data->col_ind[col_start] != i){
-          cosine_array[this->training_data->col_ind[col_start]] += (this->training_data->val[col_start] * this->training_transpose->val[item_start]);
+          //cosine numerator of this item += (item's rating * this users rating)
+          cosine_array[this->training_data->col_ind[col_start]] += (this->training_data->val[col_start] * this->training_transpose->val[user_start]);
         }
         col_start ++;
       }
-      item_start += 1;
+      user_start += 1;
     }
 
+    //for each item again
     for(int j = 0; j < this->training_transpose->nrows; j++)
     {
+      //if both item i and item j have ratings
       if(this->length_array[i] != 0 && this->length_array[j] != 0)
       {
+        //divide the numerator of item j with both items
         cosine_array[j] /= ( std::sqrt(this->length_array[i]) * std::sqrt(this->length_array[j]) );
 
         if(i < j)
         {
+          //if cosine similarity between item i and j doesn't exist
           if(this->cosine_dict.find(std::make_pair(i, j)) == this->cosine_dict.end() &&
             this->cosine_dict.find(std::make_pair(j, i)) == this->cosine_dict.end())
           {
+              //save the cosine similarity betweem item i and j
               this->cosine_dict[std::make_pair(i, j)] = cosine_array[j];
-
-              // It itter = this->cosine_dict.find(std::make_pair(i, j));
-              // if(itter->second != cosine_array[j])
-              //   Helpers::print_line("learn how to use map of pairs scrub");
           }
         }
+        //do the converse of top branch
         if(j < i)
         {
           if(this->cosine_dict.find(std::make_pair(i, j)) == this->cosine_dict.end() &&
@@ -120,18 +135,19 @@ void Recommender::build_nk_array(void)
           }
         }
       }
-      else
+      else //if one of item i or j doesn't have ratings
       {
         cosine_array[j] = 0;
       }
 
-      if(cosine_array[j] > this->nk_array[i][this->nk_array[i].size() - 1].first)//shouldn't second dim accessor just be k - 1?
+      //insertion sort of k_size items
+      int k_size = this->nk_array[i].size();
+      if(cosine_array[j] > this->nk_array[i][k_size - 1].first)
       {
-        //TODO: check change this->nk_array[i].size() - 1 TO k
-        this->nk_array[i][this->nk_array[i].size() - 1].first = cosine_array[j];
-        this->nk_array[i][this->nk_array[i].size() - 1].second = j;
+        this->nk_array[i][k_size - 1].first = cosine_array[j];
+        this->nk_array[i][k_size - 1].second = j;
 
-        int k = this->nk_array[i].size() - 1;
+        int k = k_size - 1;
         while(this->nk_array[i][k].first > this->nk_array[i][k - 1].first && k > 0)
         {
           std::pair<float, int> temp = this->nk_array[i][k - 1];
@@ -157,7 +173,7 @@ void Recommender::rebuild_nk_array(void)
 {
   clock_t timer = ::Helpers::TimerStart();
 
-  std::vector<std::pair<float, int>> nk_temp_array_for_person(this->k_value, std::make_pair(0.0, 0));
+  std::vector<std::pair<float, int>> nk_temp_array_for_person(2 * this->k_value, std::make_pair(0.0, 0));
   this->nk_array = std::vector<std::vector<std::pair<float, int>>>(this->training_transpose->nrows, nk_temp_array_for_person);
 
   for(int i = 0; i < this->training_transpose->nrows; i++)
@@ -176,6 +192,8 @@ void Recommender::rebuild_nk_array(void)
           cur_simil = this->cosine_dict.find(std::make_pair(j, i))->second;
         }
       }
+
+      //insertion sort of the item similarities
       if(cur_simil > this->nk_array[i][this->nk_array[i].size() - 1].first)
       {
         this->nk_array[i][this->nk_array[i].size() - 1].first = cur_simil;
@@ -202,11 +220,10 @@ KList Recommender::pull_k_top_values(int user_id)
   int user_item_count = this->training_data->row_ptr[user_id + 1] - this->training_data->row_ptr[user_id];
   std::vector<int> user_items(user_item_count, 0);
 
+  //fill the vector with the user's item's column values
   for(int i = 0; i < user_item_count; i++)
   {
     user_items[i] = this->training_data->col_ind[this->training_data->row_ptr[user_id] + i];
-    // if(user_id == 0)
-    //   std::cout << this->training_data->col_ind[this->training_data->row_ptr[user_id] + i] << " ";
   }
 
   KList k_list;
