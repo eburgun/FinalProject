@@ -14,8 +14,8 @@ int main()
 
   std::string out_file = "Output.txt";
 
-  int k_val = 3;
-  int n_val = 5;
+  int k_val = 10;
+  int n_val = 20;
 
   std::vector<std::pair<float, float>> results;
 
@@ -33,19 +33,18 @@ int main()
 
     std::string test_file = "../../Datasets/OriginalDataSets/SmallTestSet.txt";
     Recommender my_recommender(training_file, test_file, k_val, n_val, out_file);
-    // my_recommender.recommendations();
+    my_recommender.recommendations();
 
-    // results.push_back(my_recommender.test_recs_HR());
-
-    //now handle cold start
-    my_recommender.add_cold_start_users("../../Datasets/ColdTests/SmallColdStart1.txt");
-    std::vector<std::vector<int>> recs = my_recommender.get_recs_of_cold_start_users();
-    //check what the overall difference is with the new users
     results.push_back(my_recommender.test_recs_HR());
 
+    //now handle cold start
+    my_recommender.add_cold_start_users("../../Datasets/ColdTests/Ratings/10/SmallColdStartTrain.txt");
+    std::vector<std::vector<int>> recs = my_recommender.get_recs_of_cold_start_users();
+    //check what the overall difference is with the new users
+    //TODO: need cold start user's test data to compare against
   }
 
-  for(size_t i = 0; i < results.size() * 2; i++)
+  for(size_t i = 0; i < results.size(); i++)
   {
     std::cout << "Result: " << (i + 1) << std::endl;
     std::cout << "HitRate: " << results[i].first << std::endl;

@@ -29,10 +29,8 @@ std::vector<std::vector<int>> Recommender::get_recs_of_cold_start_users(void)
   this->build_nk_array();
 
   std::vector<std::vector<int>> recs;
-  std::cout << "all" << std::endl;
   for(int i = this->training_data->first_new_user_id; i < this->training_data->nrows; i++)
   {
-    std::cout << i << std::endl;
     //get top 20 recommendations for user with id i
     recs.push_back(this->get_recs_for_user(i, 20));
   }
@@ -78,11 +76,12 @@ std::vector<int> Recommender::get_recs_for_user(int id, int count)
   std::vector<int> recs;
   KList list = this->pull_k_top_values(id);
 
-  std::cout << "List inited" << std::endl;
   for(size_t i = 0; i < list.size() && i < count; i++)
   {
     recs.push_back(std::get<1>(list[i]));
   }
+
+  return recs;
 }
 
 void Recommender::build_nk_array(void)

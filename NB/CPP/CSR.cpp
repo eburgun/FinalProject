@@ -115,7 +115,7 @@ void CSR::add_new_users(CSR* new_users)
   //fill in the row ptr of the new rows
   for(int i = 0; i < new_users->nrows; i++)
   {
-    new_row_ptr[i + this->row_ptr_size] = new_row_ptr[this->row_ptr_size - 1] + new_users->row_ptr[i] - 1;
+    new_row_ptr[i + this->row_ptr_size] = new_row_ptr[this->row_ptr_size - 1] + new_users->row_ptr[i + 1] - 1;
   }
 
   //delete old data
